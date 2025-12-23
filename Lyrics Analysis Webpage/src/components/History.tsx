@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, ChevronRight, ListMusic } from 'lucide-react';
+import { apiUrl } from '../lib/api';
 
 interface HistoryItem {
   id: string;
   createdAt: string;
   style: string;
-  lyrics: string;
+  lyricsPreview?: string;
 }
 
 const styleLabels: Record<string, string> = {
@@ -24,46 +25,21 @@ export function History() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        // 실제 API 호출
-        // const response = await fetch('http://localhost:8080/api/v1/analysis/recent?limit=10');
-        // const data = await response.json();
-        // setHistory(data);
-
-        // Mock 데이터 (실제 사용 시 위 주석 해제하고 아래 삭제)
-        await new Promise(resolve => setTimeout(resolve, 600));
-        const mockHistory: HistoryItem[] = [
-          {
-            id: '5',
-            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            style: 'critic',
-            lyrics: '너의 목소리가 들려와\n어둠 속에서도 빛이 되어\n내 마음을 비춰주던...',
-          },
-          {
-            id: '4',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-            style: 'friend',
-            lyrics: '혼자인 밤이 두려워\n네가 없는 세상이 낯설어\n돌아올 수 있을까...',
-          },
-          {
-            id: '3',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            style: 'counselor',
-            lyrics: '시간이 지나면 잊혀질까\n이 아픔도 언젠간 무뎌질까\n하루하루가 힘들어...',
-          },
-          {
-            id: '2',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-            style: 'concise',
-            lyrics: '사랑했던 기억들이\n하나씩 떠올라\n미소 짓게 만들어...',
-          },
-          {
-            id: '1',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-            style: 'critic',
-            lyrics: '마지막 인사도 못 한 채\n돌아서야 했던 그날\n후회가 밀려와...',
-          },
-        ];
-        setHistory(mockHistory);
+        const response = await fetch(apiUrl('/api/v1/analysis/recent?limit=10'));
+        if (!response.ok) {
+          throw new Error(`기록 조회 실패: ${response.status}`);
+        }
+        const data = await response.json();
+        setHistory(
+          (data.items ?? []).map(
+            (item: { id: number; createdAt: string; style: string; lyricsPreview?: string }) => ({
+              id: String(item.id),
+              createdAt: item.createdAt,
+              style: item.style,
+              lyricsPreview: item.lyricsPreview,
+            })
+          )
+        );
       } catch (error) {
         console.error('기록 조회 실패:', error);
         alert('기록을 불러오는데 실패했습니다.');
@@ -140,7 +116,7 @@ export function History() {
                     </div>
                   </div>
                   <p className="text-gray-700 line-clamp-2 leading-relaxed">
-                    {item.lyrics}
+                    {item.lyricsPreview || '가사 미리보기가 없습니다.'}
                   </p>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors flex-shrink-0 mt-1" />

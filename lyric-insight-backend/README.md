@@ -18,6 +18,19 @@ H2 Console: http://localhost:8080/h2-console
 H2 JDBC URL (file mode): `jdbc:h2:file:./data/lyricdb`  
 User: `sa` / Password: *(empty)*
 
+### Proxy/trusted network notes
+If Gradle wrapper downloads are blocked by a proxy, configure proxy variables before running commands (example):
+```bash
+set HTTP_PROXY=http://proxy:port
+set HTTPS_PROXY=http://proxy:port
+# or export on macOS/Linux
+```
+You can also point `GRADLE_OPTS` to your proxy:
+```bash
+set GRADLE_OPTS="-Dhttp.proxyHost=proxy -Dhttp.proxyPort=port -Dhttps.proxyHost=proxy -Dhttps.proxyPort=port"
+```
+If you have a locally cached Gradle distribution, set `GRADLE_USER_HOME` to the cache directory so the wrapper can reuse it without external downloads.
+
 ## API
 - POST `/api/v1/analysis`
 - GET  `/api/v1/analysis/recent?limit=10`

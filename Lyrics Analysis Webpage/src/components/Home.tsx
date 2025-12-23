@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Loader2 } from 'lucide-react';
+import { apiUrl, checkBackendConnection } from '../lib/api';
 
 export function Home() {
   const [lyrics, setLyrics] = useState('');
   const [style, setStyle] = useState('critic');
   const [isLoading, setIsLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+  const [backendStatus, setBackendStatus] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,21 +22,20 @@ export function Home() {
     setIsLoading(true);
 
     try {
-      // 실제 API 호출
-      // const response = await fetch('http://localhost:8080/api/v1/analysis', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({ lyrics, style }),
-      // });
-      // const data = await response.json();
-      // navigate(`/result/${data.id}`);
+      const response = await fetch(apiUrl('/api/v1/analysis'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ lyrics, style }),
+      });
 
-      // Mock 응답 (실제 사용 시 위 주석 해제하고 아래 삭제)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const mockId = Date.now().toString();
-      navigate(`/result/${mockId}`, { state: { lyrics, style } });
+      if (!response.ok) {
+        throw new Error(`API 오류: ${response.status}`);
+      }
+
+      const data = await response.json();
+      navigate(`/result/${data.id}`, { state: { lyrics, style } });
     } catch (error) {
       console.error('분석 요청 실패:', error);
       alert('분석 요청에 실패했습니다.');
@@ -52,6 +54,31 @@ export function Home() {
         <p className="text-gray-600">
           가사를 입력하면 AI가 감정, 주제, 의미를 분석해드립니다
         </p>
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={async () => {
+              setIsChecking(true);
+              setBackendStatus(null);
+              try {
+                const health = await checkBackendConnection();
+                setBackendStatus(`연결 성공 (${health.status})`);
+              } catch (error) {
+                console.error('백엔드 연결 확인 실패:', error);
+                setBackendStatus('연결 실패');
+              } finally {
+                setIsChecking(false);
+              }
+            }}
+            className="px-4 py-2 rounded-lg border border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors disabled:opacity-60"
+            disabled={isChecking}
+          >
+            {isChecking ? '확인 중...' : '백엔드 연결 확인'}
+          </button>
+          {backendStatus && (
+            <span className="text-sm text-gray-700">{backendStatus}</span>
+          )}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

@@ -25,8 +25,16 @@ public class AnalysisController {
                 .build();
     }
 
-    @GetMapping("/<built-in function id>")
+    @GetMapping("/{id}")
     public AnalysisResponse get(@PathVariable Long id) {
         return service.get(id);
+    }
+
+    @GetMapping("/health")
+    public Map<String, Object> health() {
+        return Map.of(
+                "status", "ok",
+                "timestamp", System.currentTimeMillis()
+        );
     }
 }

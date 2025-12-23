@@ -75,7 +75,15 @@ public class AnalysisService {
                         .id(a.getId())
                         .style(a.getStyle())
                         .createdAt(a.getCreatedAt())
+                        .lyricsPreview(preview(a.getLyrics()))
                         .build())
                 .toList();
+    }
+
+    private String preview(String lyrics) {
+        if (lyrics == null) return "";
+        String trimmed = lyrics.strip();
+        if (trimmed.length() <= 120) return trimmed;
+        return trimmed.substring(0, 117) + "...";
     }
 }

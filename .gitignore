@@ -1,0 +1,11 @@
+# Frontend artifacts
+Lyrics Analysis Webpage/node_modules/
+Lyrics Analysis Webpage/build/
+
+# Backend artifacts
+lyric-insight-backend/backend/.gradle/
+lyric-insight-backend/backend/build/
+
+# IDE
+.idea/
+.vscode/

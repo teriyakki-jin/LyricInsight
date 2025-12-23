@@ -5,7 +5,15 @@
 
   ## Running the code
 
-  Run `npm i` to install the dependencies.
+Run `npm i` to install the dependencies.
 
-  Run `npm run dev` to start the development server.
+## Configure API base URL
+The frontend calls the Spring Boot backend directly. Create a `.env.local` file (or set an environment variable) with:
+```
+VITE_API_BASE=http://localhost:8080
+```
+Adjust the URL if your backend runs on a different host/port.
+
+## Run
+Run `npm run dev` to start the development server.
   
