@@ -13,4 +13,5 @@ public class AnalysisSummaryItem {
     private Long id;
     private String style;
     private LocalDateTime createdAt;
+    private String lyricsPreview;
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Loader2 } from 'lucide-react';
+import { apiUrl } from '../lib/api';
 
 export function Home() {
   const [lyrics, setLyrics] = useState('');
@@ -19,21 +20,20 @@ export function Home() {
     setIsLoading(true);
 
     try {
-      // 실제 API 호출
-      // const response = await fetch('http://localhost:8080/api/v1/analysis', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({ lyrics, style }),
-      // });
-      // const data = await response.json();
-      // navigate(`/result/${data.id}`);
+      const response = await fetch(apiUrl('/api/v1/analysis'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ lyrics, style }),
+      });
 
-      // Mock 응답 (실제 사용 시 위 주석 해제하고 아래 삭제)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const mockId = Date.now().toString();
-      navigate(`/result/${mockId}`, { state: { lyrics, style } });
+      if (!response.ok) {
+        throw new Error(`API 오류: ${response.status}`);
+      }
+
+      const data = await response.json();
+      navigate(`/result/${data.id}`, { state: { lyrics, style } });
     } catch (error) {
       console.error('분석 요청 실패:', error);
       alert('분석 요청에 실패했습니다.');
