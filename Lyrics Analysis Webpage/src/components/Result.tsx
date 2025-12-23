@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Tag, Lightbulb, Calendar } from 'lucide-react';
+import { apiUrl } from '../lib/api';
 
 interface AnalysisResult {
   id: string;
@@ -16,57 +17,38 @@ interface AnalysisResult {
 export function Result() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const [data, setData] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchResult = async () => {
+      if (!id) return;
       try {
-        // 실제 API 호출
-        // const response = await fetch(`http://localhost:8080/api/v1/analysis/${id}`);
-        // const result = await response.json();
-        // setData(result);
-
-        // Mock 데이터 (실제 사용 시 위 주석 해제하고 아래 삭제)
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const mockData: AnalysisResult = {
-          id: id || '1',
-          createdAt: new Date().toISOString(),
+        const response = await fetch(apiUrl(`/api/v1/analysis/${id}`));
+        if (!response.ok) {
+          throw new Error(`결과 조회 실패: ${response.status}`);
+        }
+        const result = await response.json();
+        const mapped: AnalysisResult = {
+          id: String(result.id),
+          createdAt: result.createdAt,
           result: {
-            summary: [
-              '이 노래는 이별 후 남겨진 사람의 복잡한 감정을 섬세하게 그려냅니다.',
-              '그리움과 후회, 그리고 놓아주어야 한다는 이성적 판단이 충돌하는 내면의 갈등을 표현합니다.',
-              '시간의 흐름 속에서도 변하지 않는 사랑의 잔상과 그것을 받아들이는 과정을 담고 있습니다.',
-            ],
-            emotions: [
-              { label: '그리움', score: 85 },
-              { label: '슬픔', score: 72 },
-              { label: '후회', score: 68 },
-              { label: '체념', score: 55 },
-              { label: '희망', score: 32 },
-            ],
-            themes: ['이별', '그리움', '성장', '시간', '추억', '자아성찰'],
-            highlights: [
-              {
-                line: '네가 떠난 자리에 혼자 남겨진 나',
-                meaning: '물리적 이별을 넘어선 심리적 단절감',
-                why: '공간적 은유를 통해 관계의 종결과 고립감을 효과적으로 전달합니다.',
-              },
-              {
-                line: '시간이 약이라던 말들이 거짓말 같아',
-                meaning: '상처 치유에 대한 사회적 통념에 대한 반박',
-                why: '보편적 위로의 말이 실제 경험과 괴리됨을 지적하며 진정성을 더합니다.',
-              },
-              {
-                line: '마지막 인사도 못 한 채 돌아선 너',
-                meaning: '마무리되지 못한 관계의 미완성성',
-                why: '클로저의 부재가 지속되는 아픔의 원인임을 암시합니다.',
-              },
-            ],
+            summary: (result.result?.summary ?? []) as string[],
+            emotions: (result.result?.emotions ?? []).map((emotion: { label: string; score: number }) => ({
+              label: emotion.label,
+              score: normalizeEmotionScore(emotion.score),
+            })),
+            themes: (result.result?.themes ?? []) as string[],
+            highlights: (result.result?.highlights ?? []).map(
+              (highlight: { line: string; meaning: string; why: string }) => ({
+                line: highlight.line,
+                meaning: highlight.meaning,
+                why: highlight.why,
+              })
+            ),
           },
         };
-        setData(mockData);
+        setData(mapped);
       } catch (error) {
         console.error('결과 조회 실패:', error);
         alert('결과를 불러오는데 실패했습니다.');
@@ -229,4 +211,9 @@ function Sparkles({ className }: { className?: string }) {
       />
     </svg>
   );
+}
+
+function normalizeEmotionScore(score: number) {
+  if (score <= 1) return Math.round(score * 100);
+  return Math.round(score);
 }
