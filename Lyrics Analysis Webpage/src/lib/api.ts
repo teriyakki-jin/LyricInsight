@@ -8,3 +8,11 @@ export const API_BASE =
 
 export const apiUrl = (path: string) =>
   `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
+
+export async function checkBackendConnection() {
+  const response = await fetch(apiUrl('/api/v1/analysis/health'));
+  if (!response.ok) {
+    throw new Error(`Health check failed: ${response.status}`);
+  }
+  return response.json();
+}
