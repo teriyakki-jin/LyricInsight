@@ -21,12 +21,12 @@ import java.util.List;
 public class AnalysisService {
 
     private final AnalysisRepository repo;
-    private final DummyAnalysisGenerator dummy;
-    private final ObjectMapper om = new ObjectMapper();
+    private final OpenAiLyricAnalyzer analyzer;
+    private final ObjectMapper om;
 
     @Transactional
     public AnalysisResponse create(AnalysisCreateRequest req) {
-        var resultNode = dummy.generate(req.getLyrics(), req.getStyle());
+        var resultNode = analyzer.analyze(req.getLyrics(), req.getStyle());
 
         String resultJson;
         try {
