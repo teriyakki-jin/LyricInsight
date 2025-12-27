@@ -35,3 +35,7 @@ If you have a locally cached Gradle distribution, set `GRADLE_USER_HOME` to the 
 - POST `/api/v1/analysis`
 - GET  `/api/v1/analysis/recent?limit=10`
 - GET  `/api/v1/analysis/{id}`
+
+### OpenAI 설정
+- `.env` 또는 환경 변수에 `OPENAI_API_KEY`를 설정하세요.
+- 기본 모델은 `gpt-4o-mini`이며 `app.openai.model`(프로퍼티 또는 `application.yml`) 값으로 변경할 수 있습니다.

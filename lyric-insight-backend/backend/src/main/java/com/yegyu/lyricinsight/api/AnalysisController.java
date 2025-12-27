@@ -6,6 +6,8 @@ import com.yegyu.lyricinsight.service.AnalysisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/analysis")
