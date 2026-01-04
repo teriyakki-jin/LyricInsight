@@ -25,6 +25,11 @@ public class Analysis {
     @Column(nullable = false, length = 40)
     private String style;
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String emotionJson;
+
+
     /**
      * Store AI result as JSON string for MVP simplicity.
      */

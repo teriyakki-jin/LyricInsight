@@ -24,8 +24,13 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: warn
 
 app:
+  ai:
+    base-url: http://127.0.0.1:8001
+    timeout-ms: 5000
+
   cors:
-    allowed-origins: "http://localhost:5173"
+    allowed-origins: "http://localhost:3000"
   openai:
-    api-key: ${OPENAI_API_KEY:}
-    model: gpt-4o-mini
+    #api-key: ${OPENAI_API_KEY:}
+    #model: gpt-4o-mini
+      enabled: false

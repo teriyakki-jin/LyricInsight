@@ -1,5 +1,6 @@
 package com.yegyu.lyricinsight.api;
 
+import com.yegyu.lyricinsight.infra.ai.dto.EmotionResponse;
 import jakarta.validation.Valid;
 import com.yegyu.lyricinsight.api.dto.*;
 import com.yegyu.lyricinsight.service.AnalysisService;
@@ -27,6 +28,12 @@ public class AnalysisController {
                 .build();
     }
 
+    @PostMapping("/emotion-test")
+    public EmotionResponse emotionTest(@RequestBody Map<String, String> body) {
+        return service.emotionTest(body.getOrDefault("text", ""));
+    }
+
+
     @GetMapping("/{id}")
     public AnalysisResponse get(@PathVariable Long id) {
         return service.get(id);
@@ -39,4 +46,6 @@ public class AnalysisController {
                 "timestamp", System.currentTimeMillis()
         );
     }
+
+
 }

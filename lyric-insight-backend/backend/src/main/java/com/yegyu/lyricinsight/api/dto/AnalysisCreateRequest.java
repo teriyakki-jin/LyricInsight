@@ -13,7 +13,5 @@ public class AnalysisCreateRequest {
     @Size(max = 20000)
     private String lyrics;
 
-    @NotBlank
-    @Size(max = 40)
-    private String style; // critic, counselor, friend, concise
+    private String style;
 }
