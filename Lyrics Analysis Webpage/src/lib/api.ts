@@ -16,3 +16,18 @@ export async function checkBackendConnection() {
   }
   return response.json();
 }
+
+export async function analyzeLyrics(lyrics: string, style = "basic") {
+    const res = await fetch("http://localhost:8080/api/v1/analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lyrics, style }),
+    });
+
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+    }
+
+    return res.json();
+}

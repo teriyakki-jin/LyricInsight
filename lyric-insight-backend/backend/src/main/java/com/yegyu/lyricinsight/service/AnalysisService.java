@@ -1,11 +1,10 @@
 package com.yegyu.lyricinsight.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yegyu.lyricinsight.api.dto.AnalysisCreateRequest;
-import com.yegyu.lyricinsight.api.dto.AnalysisResponse;
-import com.yegyu.lyricinsight.api.dto.AnalysisSummaryItem;
+import com.yegyu.lyricinsight.api.dto.*;
 import com.yegyu.lyricinsight.common.NotFoundException;
 import com.yegyu.lyricinsight.domain.Analysis;
 import com.yegyu.lyricinsight.infra.ai.EmotionAiClient;
@@ -17,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -97,16 +97,62 @@ public class AnalysisService {
 
     @Transactional(readOnly = true)
     public List<AnalysisSummaryItem> recent(int limit) {
+
+
         int size = Math.max(1, Math.min(limit, 50));
         return repo.findRecent(PageRequest.of(0, size)).stream()
-                .map(a -> AnalysisSummaryItem.builder()
-                        .id(a.getId())
-                        .style(a.getStyle())
-                        .createdAt(a.getCreatedAt())
-                        .lyricsPreview(preview(a.getLyrics()))
-                        .build())
+                .map(a -> {
+
+                    EmotionResponse.EmotionItem top = extractTopEmotion(a.getEmotionJson());
+
+                    return AnalysisSummaryItem.builder()
+                            .id(a.getId())
+                            .style(a.getStyle())
+                            .createdAt(a.getCreatedAt())
+                            .lyricsPreview(preview(a.getLyrics()))
+                            .topEmotionLabel(top != null ? top.getLabel() : null)
+                            .topEmotionScore(top != null ? top.getScore() : null)
+                            .build();
+                })
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public EmotionStatsResponse emotionStats(int limit) {
+        int size = Math.max(1, Math.min(limit, 200)); // 통계는 좀 더 넉넉히
+        var analyses = repo.findRecent(PageRequest.of(0, size));
+
+        // label -> [count, scoreSum]
+        java.util.Map<String, double[]> acc = new java.util.HashMap<>();
+
+        for (var a : analyses) {
+            var top = extractTopEmotion(a.getEmotionJson());
+            if (top == null) continue;
+
+            acc.computeIfAbsent(top.getLabel(), k -> new double[]{0, 0});
+            acc.get(top.getLabel())[0] += 1;               // count
+            acc.get(top.getLabel())[1] += top.getScore();  // sum
+        }
+
+        var items = acc.entrySet().stream()
+                .map(e -> {
+                    int count = (int) e.getValue()[0];
+                    double sum = e.getValue()[1];
+                    return EmotionStatItem.builder()
+                            .label(e.getKey())
+                            .count(count)
+                            .avgScore(count == 0 ? 0.0 : sum / count)
+                            .build();
+                })
+                .sorted((a, b) -> Integer.compare(b.getCount(), a.getCount()))
+                .toList();
+
+        return EmotionStatsResponse.builder()
+                .range(size)
+                .items(items)
+                .build();
+    }
+
 
     private String preview(String lyrics) {
         if (lyrics == null) return "";
@@ -119,4 +165,42 @@ public class AnalysisService {
         return emotionAiClient.analyze(text).block();
 
     }
+
+    private EmotionResponse.EmotionItem extractTopEmotion(String emotionJson) {
+        try {
+            List<EmotionResponse.EmotionItem> list = om.readValue(
+                    emotionJson == null ? "[]" : emotionJson,
+                    new com.fasterxml.jackson.core.type.TypeReference<
+                            List<EmotionResponse.EmotionItem>>() {}
+            );
+
+            // 점수 높은 순으로 정렬 후 1개
+            return list.stream()
+                    .max(Comparator.comparingDouble(EmotionResponse.EmotionItem::getScore))
+                    .orElse(null);
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String generateSummary(List<EmotionResponse.EmotionItem> emotions) {
+        if (emotions == null || emotions.isEmpty()) return "감정을 해석할 수 없습니다.";
+
+        EmotionResponse.EmotionItem top = emotions.stream()
+                .max(Comparator.comparingDouble(EmotionResponse.EmotionItem::getScore))
+                .orElse(null);
+
+        if (top == null) return "감정을 해석할 수 없습니다.";
+
+        return switch (top.getLabel()) {
+            case "불안/걱정" -> "이 가사는 불확실한 상황 속에서 느끼는 불안과 흔들리는 마음을 담고 있다.";
+            case "슬픔" -> "이 가사는 상실과 이별에서 오는 깊은 슬픔을 표현하고 있다.";
+            case "사랑" -> "상대에 대한 진한 애정과 감정의 몰입이 느껴진다.";
+            default -> "복합적인 감정이 섬세하게 드러난 가사이다.";
+        };
+    }
+
+
+
 }

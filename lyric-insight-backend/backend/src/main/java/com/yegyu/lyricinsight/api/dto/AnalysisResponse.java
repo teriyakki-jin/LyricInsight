@@ -17,4 +17,5 @@ public class AnalysisResponse {
     private JsonNode result;
     private List<EmotionResponse.EmotionItem> emotions;
 
+    private String summary;
 }

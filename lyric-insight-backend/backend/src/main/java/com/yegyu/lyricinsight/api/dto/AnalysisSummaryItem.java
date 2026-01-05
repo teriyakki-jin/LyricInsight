@@ -14,4 +14,7 @@ public class AnalysisSummaryItem {
     private String style;
     private LocalDateTime createdAt;
     private String lyricsPreview;
+
+    private String topEmotionLabel;
+    private Double topEmotionScore;
 }

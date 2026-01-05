@@ -1,50 +1,47 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Loader2 } from 'lucide-react';
-import { apiUrl, checkBackendConnection } from '../lib/api';
+import { checkBackendConnection, analyzeLyrics } from '../lib/api';
+
+
 
 export function Home() {
-  const [lyrics, setLyrics] = useState('');
-  const [style, setStyle] = useState('critic');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isChecking, setIsChecking] = useState(false);
-  const [backendStatus, setBackendStatus] = useState<string | null>(null);
-  const navigate = useNavigate();
+    const [lyrics, setLyrics] = useState('');
+    const [style, setStyle] = useState('critic');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const [isChecking, setIsChecking] = useState(false);
+    const [backendStatus, setBackendStatus] = useState<string | null>(null);
+
+    const navigate = useNavigate();
+
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!lyrics.trim()) {
-      alert('가사를 입력해주세요.');
-      return;
-    }
+        e.preventDefault();
 
-    setIsLoading(true);
+        if (!lyrics.trim()) {
+            alert('가사를 입력해주세요.');
+            return;
+        }
 
-    try {
-      const response = await fetch(apiUrl('/api/v1/analysis'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ lyrics, style }),
-      });
+        setIsLoading(true);
+        try {
+            const data = await analyzeLyrics(lyrics, style); // ✅ 여기로 통일
+            // data: { id, createdAt, emotions, ... }
 
-      if (!response.ok) {
-        throw new Error(`API 오류: ${response.status}`);
-      }
+            navigate(`/result/${data.id}`, {
+                state: { lyrics, style, emotions: data.emotions ?? [], createdAt: data.createdAt }
+            });
+        } catch (error) {
+            console.error('분석 요청 실패:', error);
+            alert('분석 요청에 실패했습니다.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-      const data = await response.json();
-      navigate(`/result/${data.id}`, { state: { lyrics, style } });
-    } catch (error) {
-      console.error('분석 요청 실패:', error);
-      alert('분석 요청에 실패했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  return (
+    return (
     <div className="max-w-4xl mx-auto px-6 py-12">
       <div className="text-center mb-12">
         <h1 className="text-gray-900 mb-3 flex items-center justify-center gap-3">

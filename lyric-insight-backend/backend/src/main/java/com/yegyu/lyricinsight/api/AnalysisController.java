@@ -47,5 +47,11 @@ public class AnalysisController {
         );
     }
 
+    @GetMapping("/emotion-stats")
+    public EmotionStatsResponse emotionStats(@RequestParam(defaultValue = "50") int limit) {
+        return service.emotionStats(limit);
+    }
+
+
 
 }
