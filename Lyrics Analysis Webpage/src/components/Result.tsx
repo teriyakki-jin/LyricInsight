@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Heart, Tag, Lightbulb, Calendar } from 'lucide-react';
+import { ArrowLeft, Heart, Tag, Lightbulb, Calendar, Quote, Sparkles } from 'lucide-react';
 import { apiUrl } from '../lib/api';
 
 type EmotionItem = { label: string; score: number };
@@ -22,6 +22,7 @@ type LocationState = {
     style?: string;
     emotions?: EmotionItem[];
     createdAt?: string;
+    result?: AnalysisResult['result'];
 } | null;
 
 export function Result() {
@@ -37,11 +38,16 @@ export function Result() {
         if (!data?.createdAt) return '';
         const d = new Date(data.createdAt);
         if (Number.isNaN(d.getTime())) return data.createdAt;
-        return d.toLocaleString('ko-KR');
+        return d.toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }, [data?.createdAt]);
 
     useEffect(() => {
-        // ✅ 1) Home에서 state로 넘어온 emotions가 있으면 즉시 렌더
         if (state?.emotions?.length) {
             setData({
                 id: id ?? 'unknown',
@@ -50,13 +56,12 @@ export function Result() {
                     label: e.label,
                     score: normalizeEmotionScore(e.score),
                 })),
-                result: null,
+                result: state.result ?? null,
             });
             setIsLoading(false);
             return;
         }
 
-        // ✅ 2) state가 없으면(새로고침/직접 URL 접속) GET fallback
         const fetchResult = async () => {
             if (!id) {
                 setIsLoading(false);
@@ -69,7 +74,6 @@ export function Result() {
 
                 const result = await response.json();
 
-                // 백엔드가 emotions를 최상위로 주든, result 안에 주든 둘 다 대응
                 const emotionsRaw = (result.emotions ?? result.result?.emotions ?? []) as EmotionItem[];
 
                 const mapped: AnalysisResult = {
@@ -79,7 +83,6 @@ export function Result() {
                         label: e.label,
                         score: normalizeEmotionScore(e.score),
                     })),
-                    // summary/themes/highlights는 나중에 붙이면 자동 표시됨
                     result: result.result ?? null,
                 };
 
@@ -97,9 +100,10 @@ export function Result() {
 
     if (isLoading) {
         return (
-            <div className="max-w-5xl mx-auto px-6 py-12">
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-pulse text-gray-500">분석 결과를 불러오는 중...</div>
+            <div className="max-w-5xl mx-auto px-6 py-12 flex items-center justify-center min-h-[60vh]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                    <p className="text-gray-600 font-medium animate-pulse">분석 결과를 불러오는 중...</p>
                 </div>
             </div>
         );
@@ -107,10 +111,13 @@ export function Result() {
 
     if (!data) {
         return (
-            <div className="max-w-5xl mx-auto px-6 py-12">
-                <div className="text-center">
-                    <p className="text-gray-600 mb-4">결과를 찾을 수 없습니다.</p>
-                    <button onClick={() => navigate('/')} className="text-indigo-600 hover:text-indigo-700">
+            <div className="max-w-5xl mx-auto px-6 py-12 min-h-[60vh] flex flex-col items-center justify-center">
+                <div className="glass p-8 rounded-2xl text-center max-w-md w-full">
+                    <p className="text-gray-600 mb-6 text-lg">결과를 찾을 수 없습니다.</p>
+                    <button
+                        onClick={() => navigate('/')}
+                        className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium"
+                    >
                         홈으로 돌아가기
                     </button>
                 </div>
@@ -123,80 +130,96 @@ export function Result() {
     const hasHighlights = !!data.result?.highlights?.length;
 
     return (
-        <div className="max-w-5xl mx-auto px-6 py-12">
+        <div className="max-w-5xl mx-auto px-6 py-12 animate-fade-in">
             <button
                 onClick={() => navigate('/')}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
+                className="group flex items-center gap-2 text-gray-500 hover:text-indigo-600 mb-8 transition-colors px-4 py-2 rounded-lg hover:bg-white/50 w-fit"
             >
-                <ArrowLeft className="w-5 h-5" />
-                새 분석하기
+                <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                <span className="font-medium">새 분석하기</span>
             </button>
 
-            <div className="space-y-6">
-                {/* 분석 정보 */}
-                <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg p-6 border border-gray-100">
-                    <div className="flex items-center gap-2 text-gray-600">
-                        <Calendar className="w-4 h-4" />
-                        <span>{createdAtText}</span>
+            <div className="grid gap-8">
+                {/* 헤더 정보 */}
+                <div className="glass rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/60">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-2">분석 결과 리포트</h1>
+                        <div className="flex items-center gap-2 text-gray-500 text-sm font-medium bg-white/50 px-3 py-1 rounded-full w-fit">
+                            <Calendar className="w-4 h-4" />
+                            <span>{createdAtText}</span>
+                        </div>
+                    </div>
+                    {/* Share button could go here */}
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                    {/* Summary 카드 */}
+                    <div className="glass rounded-3xl p-8 border border-white/60 hover:shadow-lg transition-shadow bg-gradient-to-br from-white/60 to-white/30">
+                        <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                            <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                                <Lightbulb className="w-5 h-5" />
+                            </div>
+                            3줄 요약
+                        </h2>
+
+                        {hasSummary ? (
+                            <div className="space-y-4">
+                                {data.result!.summary!.map((line, index) => (
+                                    <div key={index} className="flex gap-4 p-4 rounded-2xl bg-white/40 border border-white/50">
+                                        <div className="flex-shrink-0 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5 shadow-md shadow-indigo-200">
+                                            {index + 1}
+                                        </div>
+                                        <p className="text-gray-800 leading-relaxed font-medium">{line}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="h-40 flex items-center justify-center text-gray-400 bg-gray-50/50 rounded-2xl">
+                                <p>요약 정보 준비 중</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Emotions 카드 */}
+                    <div className="glass rounded-3xl p-8 border border-white/60 hover:shadow-lg transition-shadow bg-gradient-to-br from-white/60 to-white/30">
+                        <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                            <div className="p-2 bg-rose-100 text-rose-600 rounded-lg">
+                                <Heart className="w-5 h-5" />
+                            </div>
+                            감정 분석
+                        </h2>
+
+                        {data.emotions.length ? (
+                            <div className="space-y-6">
+                                {data.emotions.map((emotion, index) => (
+                                    <div key={index}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-gray-900 font-medium">{emotion.label}</span>
+                                            <span className="text-indigo-600 font-bold">{emotion.score}%</span>
+                                        </div>
+                                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000 ease-out"
+                                                style={{ width: `${emotion.score}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="h-40 flex items-center justify-center text-gray-400 bg-gray-50/50 rounded-2xl">
+                                <p>감정 분석 결과 없음</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Summary 카드 (있으면 렌더, 없으면 안내 문구) */}
-                <div className="bg-white rounded-2xl shadow-lg p-8">
-                    <h2 className="text-gray-900 mb-6 flex items-center gap-3">
-                        <Lightbulb className="w-6 h-6 text-amber-500" />
-                        3줄 요약
-                    </h2>
-
-                    {hasSummary ? (
-                        <div className="space-y-4">
-                            {data.result!.summary!.map((line, index) => (
-                                <div key={index} className="flex gap-4">
-                                    <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
-                                        {index + 1}
-                                    </div>
-                                    <p className="text-gray-700 pt-1">{line}</p>
-                                </div>
-                            ))}
+                {/* Themes 카드 */}
+                <div className="glass rounded-3xl p-8 border border-white/60 hover:shadow-lg transition-shadow bg-white/40">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                        <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                            <Tag className="w-5 h-5" />
                         </div>
-                    ) : (
-                        <p className="text-gray-500">요약은 아직 준비 중이에요. (현재는 감정 분석만 제공)</p>
-                    )}
-                </div>
-
-                {/* Emotions */}
-                <div className="bg-white rounded-2xl shadow-lg p-8">
-                    <h2 className="text-gray-900 mb-6 flex items-center gap-3">
-                        <Heart className="w-6 h-6 text-rose-500" />
-                        감정 분석
-                    </h2>
-
-                    {data.emotions.length ? (
-                        <div className="space-y-4">
-                            {data.emotions.map((emotion, index) => (
-                                <div key={index}>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-gray-900">{emotion.label}</span>
-                                        <span className="text-indigo-600">{emotion.score}%</span>
-                                    </div>
-                                    <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000"
-                                            style={{ width: `${emotion.score}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-gray-500">감정 결과가 없습니다.</p>
-                    )}
-                </div>
-
-                {/* Themes */}
-                <div className="bg-white rounded-2xl shadow-lg p-8">
-                    <h2 className="text-gray-900 mb-6 flex items-center gap-3">
-                        <Tag className="w-6 h-6 text-emerald-500" />
                         주요 테마
                     </h2>
 
@@ -205,69 +228,59 @@ export function Result() {
                             {data.result!.themes!.map((theme, index) => (
                                 <span
                                     key={index}
-                                    className="px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 rounded-full border border-indigo-200"
+                                    className="px-5 py-2.5 bg-white shadow-sm text-indigo-700 rounded-full border border-indigo-100 font-medium hover:scale-105 transition-transform cursor-default"
                                 >
-                  {theme}
-                </span>
+                                    #{theme}
+                                </span>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-gray-500">테마 분석은 아직 준비 중이에요.</p>
+                        <p className="text-gray-500">테마 정보 준비 중</p>
                     )}
                 </div>
 
                 {/* Highlights */}
                 <div className="space-y-6">
-                    <h2 className="text-gray-900 flex items-center gap-3">
-                        <SparklesIcon className="w-6 h-6 text-indigo-600" />
+                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3 px-2">
+                        <Sparkles className="w-6 h-6 text-indigo-600" />
                         핵심 가사 해석
                     </h2>
 
                     {hasHighlights ? (
-                        data.result!.highlights!.map((highlight, index) => (
-                            <div key={index} className="bg-white rounded-2xl shadow-lg p-8">
-                                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 mb-6 border-l-4 border-indigo-500">
-                                    <p className="text-gray-900 italic">"{highlight.line}"</p>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <h3 className="text-gray-900 mb-2">의미</h3>
-                                        <p className="text-gray-700">{highlight.meaning}</p>
+                        <div className="grid gap-6">
+                            {data.result!.highlights!.map((highlight, index) => (
+                                <div key={index} className="glass rounded-3xl p-8 border border-white/60 hover:shadow-xl transition-all duration-300">
+                                    <div className="bg-indigo-50/50 rounded-2xl p-6 mb-6 border-l-4 border-indigo-500 relative">
+                                        <Quote className="absolute top-4 left-4 w-8 h-8 text-indigo-200 -z-10 opacity-50" />
+                                        <p className="text-gray-900 text-lg font-medium leading-relaxed italic relative z-10">"{highlight.line}"</p>
                                     </div>
-                                    <div>
-                                        <h3 className="text-gray-900 mb-2">해석 근거</h3>
-                                        <p className="text-gray-600">{highlight.why}</p>
+                                    <div className="grid md:grid-cols-2 gap-8">
+                                        <div>
+                                            <h3 className="text-gray-900 font-bold mb-2 flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                                의미
+                                            </h3>
+                                            <p className="text-gray-700 leading-relaxed bg-white/30 p-4 rounded-xl">{highlight.meaning}</p>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-gray-900 font-bold mb-2 flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                                해석 근거
+                                            </h3>
+                                            <p className="text-gray-600 leading-relaxed bg-white/30 p-4 rounded-xl">{highlight.why}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))
+                            ))}
+                        </div>
                     ) : (
-                        <div className="bg-white rounded-2xl shadow-lg p-8">
-                            <p className="text-gray-500">핵심 해석은 아직 준비 중이에요.</p>
+                        <div className="glass rounded-3xl p-12 text-center text-gray-500">
+                            <p>핵심 해석 정보 준비 중</p>
                         </div>
                     )}
                 </div>
             </div>
         </div>
-    );
-}
-
-function SparklesIcon({ className }: { className?: string }) {
-    return (
-        <svg
-            className={className}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-        >
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-            />
-        </svg>
     );
 }
 

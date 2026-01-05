@@ -24,7 +24,7 @@ class PredictReq(BaseModel):
     text: str
     threshold: float = 0.25
     top_k: int = 3
-    max_length: int = 128
+    max_length: int = 512
 
 @app.get("/health")
 def health():

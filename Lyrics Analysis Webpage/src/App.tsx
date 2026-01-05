@@ -8,30 +8,32 @@ function Navigation() {
   const location = useLocation();
   
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className="sticky top-0 z-50 glass border-b-0">
       <div className="max-w-6xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Music className="w-6 h-6 text-indigo-600" />
-            <span className="font-semibold text-gray-900">가사 해석기</span>
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
+              <Music className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="font-bold text-gray-900 text-lg tracking-tight">가사 해석기</span>
           </Link>
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <Link
               to="/"
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2 rounded-xl transition-all font-medium ${
                 location.pathname === '/'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-indigo-50 text-indigo-700'
+                  : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
               분석하기
             </Link>
             <Link
               to="/history"
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2 rounded-xl transition-all font-medium ${
                 location.pathname === '/history'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-indigo-50 text-indigo-700'
+                  : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
               기록
@@ -46,7 +48,7 @@ function Navigation() {
 export default function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900 font-sans">
         <Navigation />
         <Routes>
           <Route path="/" element={<Home />} />

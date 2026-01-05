@@ -10,12 +10,6 @@ interface HistoryItem {
   lyricsPreview?: string;
 }
 
-const styleLabels: Record<string, string> = {
-  critic: '비평가',
-  counselor: '상담사',
-  friend: '친구',
-  concise: '간결',
-};
 
 export function History() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -67,31 +61,32 @@ export function History() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-pulse text-gray-500">기록을 불러오는 중...</div>
+      <div className="max-w-4xl mx-auto px-6 py-12 flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+          <p className="text-gray-600 font-medium animate-pulse">기록을 불러오는 중...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
-      <div className="mb-8">
-        <h1 className="text-gray-900 mb-2 flex items-center gap-3">
+    <div className="max-w-4xl mx-auto px-6 py-12 animate-fade-in">
+      <div className="mb-8 ml-2">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-3">
           <ListMusic className="w-8 h-8 text-indigo-600" />
           분석 기록
         </h1>
-        <p className="text-gray-600">최근 분석한 가사 목록입니다</p>
+        <p className="text-gray-600 font-medium pl-11">최근 분석한 가사 목록입니다</p>
       </div>
 
       {history.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-          <ListMusic className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-600 mb-4">아직 분석 기록이 없습니다</p>
+        <div className="glass rounded-3xl p-16 text-center border-white/60">
+          <ListMusic className="w-16 h-16 text-indigo-200 mx-auto mb-6" />
+          <p className="text-gray-600 mb-6 text-lg">아직 분석 기록이 없습니다</p>
           <button
             onClick={() => navigate('/')}
-            className="text-indigo-600 hover:text-indigo-700"
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-bold shadow-lg shadow-indigo-200"
           >
             첫 가사 분석하러 가기
           </button>
@@ -102,24 +97,25 @@ export function History() {
             <button
               key={item.id}
               onClick={() => navigate(`/result/${item.id}`)}
-              className="w-full bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all text-left group"
+              className="w-full glass rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all text-left group border border-white/60 duration-300"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm">
-                      {styleLabels[item.style] || item.style}
-                    </span>
-                    <div className="flex items-center gap-1.5 text-gray-500 text-sm">
+                  <div className="flex flex-wrap items-center gap-3 mb-3">
+                    <div className="flex items-center gap-1.5 text-gray-500 text-sm font-medium">
                       <Clock className="w-4 h-4" />
                       <span>{formatDate(item.createdAt)}</span>
                     </div>
                   </div>
-                  <p className="text-gray-700 line-clamp-2 leading-relaxed">
-                    {item.lyricsPreview || '가사 미리보기가 없습니다.'}
+                  <p className="text-gray-700 line-clamp-2 leading-relaxed font-medium bg-white/40 p-3 rounded-lg">
+                    {item.lyricsPreview ? `"${item.lyricsPreview}"` : '가사 미리보기가 없습니다.'}
                   </p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors flex-shrink-0 mt-1" />
+                <div className="flex h-full items-center">
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-600 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-indigo-400 group-hover:text-white transition-colors" />
+                  </div>
+                </div>
               </div>
             </button>
           ))}
