@@ -5,6 +5,8 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
+@lombok.AllArgsConstructor
+@lombok.NoArgsConstructor
 public class EmotionResponse {
 
     private List<EmotionItem> emotions;

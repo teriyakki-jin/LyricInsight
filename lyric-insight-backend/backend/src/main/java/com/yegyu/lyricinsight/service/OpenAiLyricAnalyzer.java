@@ -40,8 +40,7 @@ public class OpenAiLyricAnalyzer {
             ResponseEntity<String> response = restTemplate.postForEntity(
                     CHAT_COMPLETIONS_URL,
                     new HttpEntity<>(om.writeValueAsString(requestBody), headers),
-                    String.class
-            );
+                    String.class);
 
             if (!response.getStatusCode().is2xxSuccessful()) {
                 throw new IllegalStateException("OpenAI API 호출 실패: status=" + response.getStatusCode());
@@ -49,6 +48,10 @@ public class OpenAiLyricAnalyzer {
 
             String content = extractContent(response.getBody());
             return om.readTree(content);
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            String errorBody = e.getResponseBodyAsString();
+            log.error("OpenAI API 호출 실패: status={}, body={}", e.getStatusCode(), errorBody, e);
+            throw new RuntimeException("OpenAI API 오류: " + errorBody, e);
         } catch (RestClientException | JsonProcessingException e) {
             log.error("OpenAI 분석 호출 중 오류", e);
             throw new RuntimeException("OpenAI 분석 중 오류가 발생했습니다.", e);

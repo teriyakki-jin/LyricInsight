@@ -8,7 +8,6 @@ import com.yegyu.lyricinsight.api.dto.*;
 import com.yegyu.lyricinsight.common.NotFoundException;
 import com.yegyu.lyricinsight.domain.Analysis;
 import com.yegyu.lyricinsight.infra.ai.EmotionAiClient;
-import com.yegyu.lyricinsight.infra.ai.dto.EmotionRequest;
 import com.yegyu.lyricinsight.infra.ai.dto.EmotionResponse;
 import com.yegyu.lyricinsight.repo.AnalysisRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,35 +26,57 @@ public class AnalysisService {
     private final OpenAiLyricAnalyzer analyzer;
     private final ObjectMapper om;
     private final EmotionAiClient emotionAiClient;
+    private final com.yegyu.lyricinsight.config.OpenAiProperties openAiProperties;
 
     @Transactional
     public AnalysisResponse create(AnalysisCreateRequest req) {
-        // req.getLyrics();
-
         String style = (req.getStyle() == null || req.getStyle().isBlank())
                 ? "basic"
                 : req.getStyle();
 
-        // 1) 감정 모델 호출 (FastAPI)
-        EmotionResponse emo = emotionAiClient
-                .analyze(req.getLyrics())
-                .block();
+        // 1) 감정 모델 호출 (FastAPI) - Always needed for stats/base logic
+        EmotionResponse emo = emotionAiClient.analyze(req.getLyrics()).block();
+        String emotionJson = serializeEmotion(emo);
 
-        String emotionJson;
-        try {
-            emotionJson = om.writeValueAsString(
-                    emo != null && emo.getEmotions() != null
-                            ? emo.getEmotions()
-                            : List.of());
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize emotion result", e);
+        com.fasterxml.jackson.databind.node.ObjectNode resultObj;
+
+        // 2) Check OpenAI Enabled
+        if (openAiProperties.enabled()) {
+            org.slf4j.LoggerFactory.getLogger(AnalysisService.class)
+                    .info("OpenAI Analysis Enabled. Starting analysis...");
+            try {
+                JsonNode openAiResult = analyzer.analyze(req.getLyrics(), style);
+                org.slf4j.LoggerFactory.getLogger(AnalysisService.class).info("OpenAI Analysis Success: {}",
+                        openAiResult);
+
+                if (openAiResult.isObject()) {
+                    resultObj = (com.fasterxml.jackson.databind.node.ObjectNode) openAiResult;
+
+                    // Ensure compatible emotion data structure with basic analysis
+                    if (resultObj.has("emotions")) {
+                        try {
+                            JsonNode aiEmotions = resultObj.get("emotions");
+                            emotionJson = om.writeValueAsString(aiEmotions);
+                            emo = new EmotionResponse(
+                                    om.convertValue(aiEmotions, new TypeReference<List<EmotionResponse.EmotionItem>>() {
+                                    }));
+                        } catch (Exception e) {
+                            org.slf4j.LoggerFactory.getLogger(AnalysisService.class)
+                                    .warn("Failed to parse OpenAI emotions, keeping basic emotions", e);
+                        }
+                    }
+                } else {
+                    resultObj = createFallbackResult(emo);
+                }
+            } catch (Exception e) {
+                org.slf4j.LoggerFactory.getLogger(AnalysisService.class).error("OpenAI Analysis Failed", e);
+                // Fallback if OpenAI fails
+                resultObj = createFallbackResult(emo);
+            }
+        } else {
+            org.slf4j.LoggerFactory.getLogger(AnalysisService.class).info("OpenAI Disabled. Using basic fallback.");
+            resultObj = createFallbackResult(emo);
         }
-
-        // 2) 3줄 요약 생성 (Rule-based)
-        List<String> summaryLines = generate3LineSummary(emo != null ? emo.getEmotions() : List.of());
-        com.fasterxml.jackson.databind.node.ObjectNode resultObj = om.createObjectNode();
-        com.fasterxml.jackson.databind.node.ArrayNode summaryArr = resultObj.putArray("summary");
-        summaryLines.forEach(summaryArr::add);
 
         Analysis saved = repo.save(
                 Analysis.builder()
@@ -65,13 +86,31 @@ public class AnalysisService {
                         .emotionJson(emotionJson)
                         .build());
 
-        // 3) 응답
         return AnalysisResponse.builder()
                 .id(saved.getId())
                 .createdAt(saved.getCreatedAt())
                 .emotions(emo != null ? emo.getEmotions() : List.of())
                 .result(resultObj)
                 .build();
+    }
+
+    private String serializeEmotion(EmotionResponse emo) {
+        try {
+            return om.writeValueAsString(
+                    emo != null && emo.getEmotions() != null
+                            ? emo.getEmotions()
+                            : List.of());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize emotion result", e);
+        }
+    }
+
+    private com.fasterxml.jackson.databind.node.ObjectNode createFallbackResult(EmotionResponse emo) {
+        List<String> summaryLines = generate3LineSummary(emo != null ? emo.getEmotions() : List.of());
+        com.fasterxml.jackson.databind.node.ObjectNode resultObj = om.createObjectNode();
+        com.fasterxml.jackson.databind.node.ArrayNode summaryArr = resultObj.putArray("summary");
+        summaryLines.forEach(summaryArr::add);
+        return resultObj;
     }
 
     @Transactional(readOnly = true)
@@ -189,25 +228,6 @@ public class AnalysisService {
         }
     }
 
-    private String generateSummary(List<EmotionResponse.EmotionItem> emotions) {
-        if (emotions == null || emotions.isEmpty())
-            return "감정을 해석할 수 없습니다.";
-
-        EmotionResponse.EmotionItem top = emotions.stream()
-                .max(Comparator.comparingDouble(EmotionResponse.EmotionItem::getScore))
-                .orElse(null);
-
-        if (top == null)
-            return "감정을 해석할 수 없습니다.";
-
-        return switch (top.getLabel()) {
-            case "불안/걱정" -> "이 가사는 불확실한 상황 속에서 느끼는 불안과 흔들리는 마음을 담고 있다.";
-            case "슬픔" -> "이 가사는 상실과 이별에서 오는 깊은 슬픔을 표현하고 있다.";
-            case "사랑" -> "상대에 대한 진한 애정과 감정의 몰입이 느껴진다.";
-            default -> "복합적인 감정이 섬세하게 드러난 가사이다.";
-        };
-    }
-
     private List<String> generate3LineSummary(List<EmotionResponse.EmotionItem> emotions) {
         if (emotions == null || emotions.size() < 1) {
             return List.of(
@@ -241,5 +261,13 @@ public class AnalysisService {
         }
 
         return List.of(line1, line2, line3);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        if (!repo.existsById(id)) {
+            throw new NotFoundException("Analysis not found: " + id);
+        }
+        repo.deleteById(id);
     }
 }

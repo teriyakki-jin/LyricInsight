@@ -33,7 +33,6 @@ public class AnalysisController {
         return service.emotionTest(body.getOrDefault("text", ""));
     }
 
-
     @GetMapping("/{id}")
     public AnalysisResponse get(@PathVariable Long id) {
         return service.get(id);
@@ -43,8 +42,7 @@ public class AnalysisController {
     public Map<String, Object> health() {
         return Map.of(
                 "status", "ok",
-                "timestamp", System.currentTimeMillis()
-        );
+                "timestamp", System.currentTimeMillis());
     }
 
     @GetMapping("/emotion-stats")
@@ -52,6 +50,9 @@ public class AnalysisController {
         return service.emotionStats(limit);
     }
 
-
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
+    }
 
 }
