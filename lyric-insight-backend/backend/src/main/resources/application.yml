@@ -31,6 +31,6 @@ app:
   cors:
     allowed-origins: "http://localhost:3000"
   openai:
-    api-key: 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
+    api-key:
     model: gpt-4o-mini
     enabled: true
