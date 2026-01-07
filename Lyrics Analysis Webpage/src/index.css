@@ -116,3 +116,26 @@
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 }
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton {
+  @apply bg-gray-200/50 relative overflow-hidden rounded-md;
+}
+
+.skeleton::after {
+  @apply absolute inset-0 content-[''];
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.5) 50%,
+      transparent 100%);
+  animation: shimmer 1.5s infinite;
+}

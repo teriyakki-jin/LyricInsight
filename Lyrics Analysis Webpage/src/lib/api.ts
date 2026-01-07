@@ -18,16 +18,26 @@ export async function checkBackendConnection() {
 }
 
 export async function analyzeLyrics(lyrics: string, style = "basic") {
-    const res = await fetch("http://localhost:8080/api/v1/analysis", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lyrics, style }),
-    });
+  const res = await fetch(apiUrl("/api/v1/analysis"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ lyrics, style }),
+  });
 
-    if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `HTTP ${res.status}`);
-    }
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
 
-    return res.json();
+  return res.json();
+}
+export async function deleteAnalysis(id: string) {
+  const res = await fetch(apiUrl(`/api/v1/analysis/${id}`), {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
 }

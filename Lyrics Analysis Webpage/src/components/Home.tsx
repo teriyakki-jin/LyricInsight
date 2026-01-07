@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Music2, Loader2, PlayCircle, Search, Mic2 } from 'lucide-react';
 import { analyzeLyrics, checkBackendConnection, apiUrl } from '../lib/api';
+import { Skeleton } from './ui/Skeleton';
 
 export function Home() {
   const [lyrics, setLyrics] = useState('');
@@ -70,6 +71,32 @@ export function Home() {
       setIsLoading(false);
     }
   };
+
+  // Render Skeleton Overlay when loading (simulating Result page structure)
+  if (isLoading) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 animate-fade-in min-h-[80vh] flex flex-col justify-center">
+        <div className="text-center mb-12">
+          <Skeleton className="h-12 w-64 mx-auto mb-4 rounded-xl" />
+          <Skeleton className="h-6 w-96 mx-auto rounded-lg" />
+        </div>
+        <div className="glass rounded-3xl p-8 border border-white/60">
+          <div className="grid gap-8">
+            <Skeleton className="h-20 w-full rounded-2xl" />
+            <div className="grid md:grid-cols-2 gap-8">
+              <Skeleton className="h-64 w-full rounded-3xl" />
+              <Skeleton className="h-64 w-full rounded-3xl" />
+            </div>
+            <Skeleton className="h-40 w-full rounded-3xl" />
+          </div>
+        </div>
+        <div className="mt-8 text-center flex flex-col items-center gap-2">
+          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+          <p className="text-gray-500 font-medium animate-pulse">AI가 가사를 깊이 있게 분석하고 있습니다...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12 flex flex-col justify-center min-h-[80vh] animate-fade-in">

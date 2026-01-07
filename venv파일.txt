@@ -1,0 +1,2 @@
+.\.venv\Scripts\activate
+uvicorn api.server_emotion_kpoem:app --host 127.0.0.1 --port 8001
