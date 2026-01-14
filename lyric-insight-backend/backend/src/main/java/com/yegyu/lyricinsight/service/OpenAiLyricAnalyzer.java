@@ -90,6 +90,14 @@ public class OpenAiLyricAnalyzer {
                   "summary": [string, string, string], // 3줄 요약, 각 항목은 간결한 문장
                   "emotions": [ { "label": string, "score": number } ], // score는 0~1 사이 소수
                   "themes": [string, ...], // 핵심 테마 단어 목록
+                  "word_emotions": [ // 가사 중 핵심 감정 단어 추출
+                    {
+                      "word": string,
+                      "emotion": string,
+                      "score": number,
+                      "explanation": string
+                    }
+                  ],
                   "highlights": [
                     { "line": string, "meaning": string, "why": string },
                     ...

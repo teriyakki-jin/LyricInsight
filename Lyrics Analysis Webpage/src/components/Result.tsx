@@ -6,6 +6,7 @@ import { Skeleton } from './ui/Skeleton';
 
 type EmotionItem = { label: string; score: number };
 type HighlightItem = { line: string; meaning: string; why: string };
+type WordEmotionItem = { word: string; emotion: string; score: number; explanation: string };
 
 interface AnalysisResult {
     id: string;
@@ -15,6 +16,7 @@ interface AnalysisResult {
         summary?: string[];
         themes?: string[];
         highlights?: HighlightItem[];
+        word_emotions?: WordEmotionItem[];
     } | null;
 }
 
@@ -270,6 +272,42 @@ export function Result() {
                         </div>
                     ) : (
                         <p className="text-gray-500 text-sm">테마 정보 준비 중</p>
+                    )}
+                </div>
+
+                {/* Word Emotions 카드 */}
+                <div className="glass rounded-3xl p-6 sm:p-8 border border-white/60 hover:shadow-lg transition-shadow bg-gradient-to-br from-indigo-50/30 to-purple-50/30">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                        </div>
+                        단어 별 감정 분석
+                    </h2>
+
+                    {data.result?.word_emotions?.length ? (
+                        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+                            {data.result.word_emotions.map((item, index) => (
+                                <div key={index} className="bg-white/60 p-4 rounded-2xl border border-white/80 hover:bg-white transition-colors group">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-indigo-600 font-bold text-base sm:text-lg">"{item.word}"</span>
+                                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-500 rounded-full text-xs font-bold border border-indigo-100 uppercase tracker-wider">
+                                            {item.emotion}
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-700 text-sm leading-relaxed mb-3">{item.explanation}</p>
+                                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-indigo-500 rounded-full"
+                                            style={{ width: `${normalizeEmotionScore(item.score)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="h-40 flex items-center justify-center text-gray-400 bg-gray-50/50 rounded-2xl">
+                            <p className="text-sm">단어 분석 결과 없음</p>
+                        </div>
                     )}
                 </div>
 

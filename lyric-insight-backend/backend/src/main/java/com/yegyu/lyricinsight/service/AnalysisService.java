@@ -59,7 +59,9 @@ public class AnalysisService {
                             emotionJson = om.writeValueAsString(aiEmotions);
                             emo = new EmotionResponse(
                                     om.convertValue(aiEmotions, new TypeReference<List<EmotionResponse.EmotionItem>>() {
-                                    }));
+                                    }),
+                                    null,
+                                    null);
                         } catch (Exception e) {
                             org.slf4j.LoggerFactory.getLogger(AnalysisService.class)
                                     .warn("Failed to parse OpenAI emotions, keeping basic emotions", e);
@@ -108,8 +110,24 @@ public class AnalysisService {
     private com.fasterxml.jackson.databind.node.ObjectNode createFallbackResult(EmotionResponse emo) {
         List<String> summaryLines = generate3LineSummary(emo != null ? emo.getEmotions() : List.of());
         com.fasterxml.jackson.databind.node.ObjectNode resultObj = om.createObjectNode();
+
+        // summary
         com.fasterxml.jackson.databind.node.ArrayNode summaryArr = resultObj.putArray("summary");
         summaryLines.forEach(summaryArr::add);
+
+        // word_emotions
+        if (emo != null && emo.getWord_emotions() != null) {
+            resultObj.set("word_emotions", om.valueToTree(emo.getWord_emotions()));
+        }
+
+        // highlights
+        if (emo != null && emo.getHighlights() != null) {
+            resultObj.set("highlights", om.valueToTree(emo.getHighlights()));
+        }
+
+        // empty themes for UI consistency
+        resultObj.putArray("themes");
+
         return resultObj;
     }
 
