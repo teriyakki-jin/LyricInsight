@@ -27,6 +27,7 @@ public class AnalysisService {
     private final ObjectMapper om;
     private final EmotionAiClient emotionAiClient;
     private final com.yegyu.lyricinsight.config.OpenAiProperties openAiProperties;
+    private final com.yegyu.lyricinsight.infra.gemini.GeminiClient geminiClient;
 
     @Transactional
     public AnalysisResponse create(AnalysisCreateRequest req) {
@@ -279,6 +280,11 @@ public class AnalysisService {
         }
 
         return List.of(line1, line2, line3);
+    }
+
+    public com.yegyu.lyricinsight.infra.gemini.dto.InterpretationResponse interpretLyrics(String lyrics,
+            String apiKey) {
+        return geminiClient.interpretLyrics(lyrics, apiKey);
     }
 
     @Transactional

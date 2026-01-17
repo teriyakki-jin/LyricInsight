@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Heart, Tag, Lightbulb, Calendar, Quote, Sparkles, Share2, Check } from 'lucide-react';
 import { apiUrl } from '../lib/api';
 import { Skeleton } from './ui/Skeleton';
+import { LyricsInterpretation } from './LyricsInterpretation';
 
 type EmotionItem = { label: string; score: number };
 type HighlightItem = { line: string; meaning: string; why: string };
@@ -37,6 +38,7 @@ export function Result() {
     const [data, setData] = useState<AnalysisResult | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isCopied, setIsCopied] = useState(false);
+    const [lyrics, setLyrics] = useState<string>('');
 
     const createdAtText = useMemo(() => {
         if (!data?.createdAt) return '';
@@ -52,6 +54,10 @@ export function Result() {
     }, [data?.createdAt]);
 
     useEffect(() => {
+        if (state?.lyrics) {
+            setLyrics(state.lyrics);
+        }
+
         if (state?.emotions?.length) {
             setData({
                 id: id ?? 'unknown',
@@ -351,6 +357,13 @@ export function Result() {
                         </div>
                     )}
                 </div>
+
+                {/* AI 가사 해석 */}
+                {lyrics && (
+                    <div className="mt-8">
+                        <LyricsInterpretation lyrics={lyrics} />
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -34,3 +34,6 @@ app:
     api-key:
     model: gpt-4o-mini
     enabled: true
+  gemini:
+    model: gemini-2.0-flash-exp
+    base-url: https://generativelanguage.googleapis.com/v1beta

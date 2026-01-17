@@ -50,6 +50,12 @@ public class AnalysisController {
         return service.emotionStats(limit);
     }
 
+    @PostMapping("/interpret")
+    public com.yegyu.lyricinsight.infra.gemini.dto.InterpretationResponse interpretLyrics(
+            @Valid @RequestBody InterpretRequest request) {
+        return service.interpretLyrics(request.getLyrics(), request.getApiKey());
+    }
+
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         service.delete(id);

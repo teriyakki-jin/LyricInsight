@@ -2,11 +2,12 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { Home } from './components/Home';
 import { Result } from './components/Result';
 import { History } from './components/History';
+import { Settings } from './components/Settings';
 import { Music } from 'lucide-react';
 
 function Navigation() {
   const location = useLocation();
-  
+
   return (
     <nav className="sticky top-0 z-50 glass border-b-0">
       <div className="max-w-6xl mx-auto px-6 py-4">
@@ -20,23 +21,30 @@ function Navigation() {
           <div className="flex gap-2">
             <Link
               to="/"
-              className={`px-4 py-2 rounded-xl transition-all font-medium ${
-                location.pathname === '/'
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
+              className={`px-4 py-2 rounded-xl transition-all font-medium ${location.pathname === '/'
+                ? 'bg-indigo-50 text-indigo-700'
+                : 'text-gray-600 hover:bg-gray-50'
+                }`}
             >
               분석하기
             </Link>
             <Link
               to="/history"
-              className={`px-4 py-2 rounded-xl transition-all font-medium ${
-                location.pathname === '/history'
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
+              className={`px-4 py-2 rounded-xl transition-all font-medium ${location.pathname === '/history'
+                ? 'bg-indigo-50 text-indigo-700'
+                : 'text-gray-600 hover:bg-gray-50'
+                }`}
             >
               기록
+            </Link>
+            <Link
+              to="/settings"
+              className={`px-4 py-2 rounded-xl transition-all font-medium ${location.pathname === '/settings'
+                ? 'bg-indigo-50 text-indigo-700'
+                : 'text-gray-600 hover:bg-gray-50'
+                }`}
+            >
+              설정
             </Link>
           </div>
         </div>
@@ -54,6 +62,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/result/:id" element={<Result />} />
           <Route path="/history" element={<History />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>
     </Router>
