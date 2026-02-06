@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8082
 
 spring:
   datasource:
@@ -25,7 +25,7 @@ logging:
 
 app:
   ai:
-    base-url: http://127.0.0.1:8001
+    base-url: http://127.0.0.1:8002
 
 
   cors:

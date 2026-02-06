@@ -59,10 +59,53 @@ def extract_highlights(text: str):
         })
     return highlights
 
+def predict_by_lexicon(text: str):
+    clean_text = re.sub(r"[^\w\s]", " ", text)
+    words = clean_text.split()
+    scores = Counter()
+    for word in words:
+        if word in EMOTION_LEXICON:
+            for emo in EMOTION_LEXICON[word]:
+                scores[emo["label"]] += emo["score"]
+    total = sum(scores.values())
+    if total == 0:
+        return []
+    results = []
+    for label, score in scores.most_common(3):
+        results.append({"label": label, "score": round(score / total, 4)})
+    return results
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
 def predict(text: str, threshold=0.25, top_k=3, max_length=128):
-    # ML 모델 로딩 시도 (생략 가능하면 lexicon만 씀)
-    # 여기서는 lexicon 기반 결과를 우선시하거나 폴백으로 사용
-    picked = predict_by_lexicon(text)
+    picked = []
+    try:
+        if LABELS_PATH.exists():
+            print("Loading ML model...", flush=True)
+            labels = json.loads(LABELS_PATH.read_text(encoding="utf-8"))
+            tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR, use_safetensors=True)
+            model = AutoModelForSequenceClassification.from_pretrained(MODEL_DIR, use_safetensors=True)
+            model.eval()
+            
+            inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=max_length)
+            with torch.no_grad():
+                logits = model(**inputs).logits.squeeze(0).cpu().numpy()
+            probs = sigmoid(logits)
+            pairs = sorted(zip(labels, probs), key=lambda x: x[1], reverse=True)
+            
+            picked = [{"label": l, "score": float(round(p, 4))} for l, p in pairs if p >= threshold]
+            if not picked:
+                picked = [{"label": l, "score": float(round(p, 4))} for l, p in pairs[:top_k]]
+            print("ML Prediction success")
+    except Exception as e:
+        print(f"ML Prediction failed: {e}", flush=True)
+        picked = []
+
+    if not picked:
+        print("Fallback to Lexicon")
+        picked = predict_by_lexicon(text)
+
     word_emotions = extract_word_emotions(text)
     highlights = extract_highlights(text)
 

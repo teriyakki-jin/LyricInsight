@@ -1,10 +1,31 @@
 # Frontend artifacts
 Lyrics Analysis Webpage/node_modules/
 Lyrics Analysis Webpage/build/
+Lyrics Analysis Webpage/dist/
 
 # Backend artifacts
 lyric-insight-backend/backend/.gradle/
 lyric-insight-backend/backend/build/
+
+# Python/AI artifacts
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.env
+.env.local
+
+# Large Model Files
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.zip
+
+# Data & Models
+ai/models/
+ai/data/
+data/
 
 # IDE
 .idea/

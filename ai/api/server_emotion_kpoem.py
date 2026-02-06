@@ -1,26 +1,46 @@
+import os
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 import json
 import re
 from collections import Counter
 import numpy as np
 from pathlib import Path
 import torch
-from fastapi import FastAPI
-from pydantic import BaseModel
+# from fastapi import FastAPI
+# from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
+from fastapi import FastAPI
+from pydantic import BaseModel
+
 BASE_DIR = Path(__file__).resolve().parent.parent  # ai/
-MODEL_DIR = BASE_DIR / "models" / "emotion_kpoem"
+print("Loading imports...", flush=True)
+
+# MODEL_DIR = BASE_DIR / "models" / "emotion_kpoem"
+# MODEL_DIR = BASE_DIR / "models" / "emotion_v2"
+# MODEL_DIR = BASE_DIR / "models" / "emotion_v3" / "checkpoint-50"
+MODEL_DIR = BASE_DIR.parent / "emotion_v3"  # D:/lyricinsight/emotion_v3 (최신 V3 모델)
 LABELS_PATH = MODEL_DIR / "labels.json"
+print(f"LABELS_PATH: {LABELS_PATH}", flush=True)
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 LEXICON_PATH = BASE_DIR / "data" / "emotion_lexicon.json"
+print(f"LEXICON_PATH: {LEXICON_PATH}", flush=True)
 
 def load_lexicon():
+    print("Loading lexicon...", flush=True)
     if LEXICON_PATH.exists():
-        with LEXICON_PATH.open("r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with LEXICON_PATH.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+                print(f"Lexicon loaded: {len(data)} items", flush=True)
+                return data
+        except Exception as e:
+            print(f"Error loading lexicon: {e}", flush=True)
+            return {}
+    print("Lexicon file not found", flush=True)
     return {}
 
 EMOTION_LEXICON = load_lexicon()
@@ -98,15 +118,36 @@ def extract_highlights(text: str):
     return highlights
 
 # ML 모델 로드 시도 (실패 시 무시)
+HAS_MODEL = False
+tokenizer = None
+model = None
+labels = []
+
 try:
-    labels = json.loads(LABELS_PATH.read_text(encoding="utf-8"))
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_DIR)
-    model.eval()
-    HAS_MODEL = True
+    if LABELS_PATH.exists():
+        import torch
+        from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+        print("Loading ML model...", flush=True)
+        labels = json.loads(LABELS_PATH.read_text(encoding="utf-8"))
+        
+        # 모델 로딩 최적화: use_safetensors=True, low_cpu_mem_usage=True
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR, use_safetensors=True)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            MODEL_DIR, 
+            use_safetensors=True,
+            # low_cpu_mem_usage=True  # 윈도우/Torch 버전 문제 시 주석 처리 필요할 수 있음
+        )
+        model.eval()
+        HAS_MODEL = True
+        print(f"ML model loaded successfully. Labels: {len(labels)}", flush=True)
+    else:
+        print("Labels file not found, skipping ML model.", flush=True)
+        HAS_MODEL = False
 except Exception as e:
-    print(f"Warning: Could not load ML model: {e}")
+    print(f"Warning: Could not load ML model: {e}", flush=True)
     HAS_MODEL = False
+
 
 app = FastAPI(title="LyricInsight Emotion(KPoEM) API")
 

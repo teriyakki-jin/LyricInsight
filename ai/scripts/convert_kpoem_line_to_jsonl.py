@@ -10,7 +10,7 @@ OUT_PATH = Path("../data/labeled/kpoem_emotion.jsonl")
 OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 # KPoEM v4 line-level TSV (HF에 업로드된 경로) :contentReference[oaicite:2]{index=2}
-HF_TSV = "hf://datasets/AKS-DHLAB/KPoEM/KPoEM_line_dataset_v4.tsv"
+HF_TSV = r"d:\LyricInsight\ai\data\KPoEM_line_dataset_v4.tsv"
 
 ANNOT_COLS = ["annotator_01", "annotator_02", "annotator_03", "annotator_04", "annotator_05"]
 
